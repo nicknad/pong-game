@@ -4,8 +4,11 @@ import "core:fmt"
 import rl "vendor:raylib"
 
 // CONSTANTS
-WINDOW_HEIGHT : i32 : 860
-WINDOW_WIDTH : i32 : 1024
+WINDOW_HEIGHT : f32 : 860
+WINDOW_WIDTH : f32 : 1024
+WINDOW_HEIGHT_I32 : i32 : 860
+WINDOW_WIDTH_I32 : i32 : 1024
+
 POINTS_NEEDED_TO_WIN : u32 : 10
 
 // DEFINITIONS
@@ -19,7 +22,9 @@ ball :: struct {
 player_brick :: struct {
 	position: rl.Vector2,
 	speed: f32,
-	size: rl.Vector2
+	size: rl.Vector2,
+	key_up : bool,
+	key_down : bool,
 }
 
 game_state_struct :: struct {
@@ -31,22 +36,26 @@ game_state_struct :: struct {
 
 // Global Variables
 b : ball = ball{
-	position=rl.Vector2{f32(WINDOW_WIDTH)/2, f32(WINDOW_HEIGHT)/2}, 
+	position=rl.Vector2{WINDOW_WIDTH/2, WINDOW_HEIGHT/2}, 
 	speed=rl.Vector2{5,0}, 
 	radius=10, 
 	active=true,
 	}
 
 p_one : player_brick = player_brick{
-	position= rl.Vector2{0, f32(WINDOW_HEIGHT)/2},
+	position= rl.Vector2{0, (WINDOW_HEIGHT/2)-40},
 	speed=10,
 	size=rl.Vector2{20,80},
+	key_up=false,
+	key_down=false,
 }
 
 p_two : player_brick = player_brick{
-	position= rl.Vector2{f32(WINDOW_WIDTH)-20, f32(WINDOW_HEIGHT)/2},
+	position= rl.Vector2{WINDOW_WIDTH-20, (WINDOW_HEIGHT/2)-40},
 	speed=10,
 	size=rl.Vector2{20,80},
+	key_up=false,
+	key_down=false,
 }
 
 game_state : game_state_struct = game_state_struct{
@@ -58,7 +67,7 @@ game_state : game_state_struct = game_state_struct{
 
 
 main :: proc() {
-	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Pong Game")
+	rl.InitWindow(WINDOW_WIDTH_I32, WINDOW_HEIGHT_I32, "Pong Game")
 	defer rl.CloseWindow()
 	
 	rl.SetTargetFPS(60)
@@ -71,8 +80,8 @@ main :: proc() {
 
 draw_background :: proc() {
 	rl.ClearBackground(rl.BLACK)
-	rl.DrawRectangle(0,0,WINDOW_WIDTH,10,rl.GRAY)
-	rl.DrawRectangle(0,WINDOW_HEIGHT-10,WINDOW_WIDTH,10,rl.GRAY)		
+	rl.DrawRectangle(0,0,WINDOW_WIDTH_I32,10,rl.GRAY)
+	rl.DrawRectangle(0,WINDOW_HEIGHT_I32-10,WINDOW_WIDTH_I32,10,rl.GRAY)		
 }
 
 draw_frame :: proc() {
@@ -84,6 +93,65 @@ draw_frame :: proc() {
 	rl.EndDrawing()
 }
 
+
+player_one_input :: proc() {
+	if rl.IsKeyReleased(rl.KeyboardKey.Q) {
+		p_one.key_up =  false
+	}
+	
+	if rl.IsKeyPressed(rl.KeyboardKey.Q) || p_one.key_up {
+		p_one.position.y -= p_one.speed;
+		p_one.key_up = true
+		if p_one.position.y < 0 {
+			p_one.position.y = 0
+		}
+	}
+	
+	if rl.IsKeyReleased(rl.KeyboardKey.A) {
+		p_one.key_down =  false
+	}
+	
+		
+	if rl.IsKeyPressed(rl.KeyboardKey.A) || p_one.key_down {
+		p_one.position.y += p_one.speed;
+		p_one.key_down =  true
+		
+		if p_one.position.y > WINDOW_HEIGHT - p_one.size.y {
+			p_one.position.y = WINDOW_HEIGHT - p_one.size.y
+		}
+	}
+}
+
+player_two_input :: proc() {
+	
+	if rl.IsKeyReleased(rl.KeyboardKey.O) {
+		p_two.key_up =  false
+	}
+	
+	if rl.IsKeyPressed(rl.KeyboardKey.O) || p_two.key_up{
+		p_two.position.y -= p_two.speed;
+		p_two.key_up = true
+		
+		if p_two.position.y < 0 {
+			p_two.position.y = 0
+		}
+	}
+	
+	if rl.IsKeyReleased(rl.KeyboardKey.L) {
+		p_two.key_down =  false
+	}
+	
+		
+	if rl.IsKeyPressed(rl.KeyboardKey.L) || p_two.key_down{
+		p_two.position.y += p_two.speed;
+		p_two.key_down =  true
+		
+		if p_two.position.y > WINDOW_HEIGHT - p_two.size.y {
+			p_two.position.y = WINDOW_HEIGHT - p_two.size.y
+		}
+	}
+}
+
 update_game :: proc() {
 	if game_state.game_over {
 		return;
@@ -93,7 +161,11 @@ update_game :: proc() {
 		b.position += b.speed
 	}
 	
-	if b.position.x > f32(WINDOW_WIDTH) || b.position.x < 0 {
+	player_one_input()
+	player_two_input()	
+	
+	
+	if b.position.x > WINDOW_WIDTH || b.position.x < 0 {
 		b.speed *= -1;
 	}		
 }
