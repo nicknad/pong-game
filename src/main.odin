@@ -2,47 +2,98 @@ package main
 
 import "core:fmt"
 import rl "vendor:raylib"
-import b2 "vendor:box2d"
+
+// CONSTANTS
+WINDOW_HEIGHT : i32 : 860
+WINDOW_WIDTH : i32 : 1024
+POINTS_NEEDED_TO_WIN : u32 : 10
+
+// DEFINITIONS
+ball :: struct {
+	position: rl.Vector2,
+	speed: rl.Vector2,
+	radius: f32,
+	active: bool,
+}
+
+player_brick :: struct {
+	position: rl.Vector2,
+	speed: f32,
+	size: rl.Vector2
+}
+
+game_state_struct :: struct {
+	player_one_points: u32,
+	player_two_points: u32,
+	game_paused: bool,
+	game_over: bool,
+}
+
+// Global Variables
+b : ball = ball{
+	position=rl.Vector2{f32(WINDOW_WIDTH)/2, f32(WINDOW_HEIGHT)/2}, 
+	speed=rl.Vector2{5,0}, 
+	radius=10, 
+	active=true,
+	}
+
+p_one : player_brick = player_brick{
+	position= rl.Vector2{0, f32(WINDOW_HEIGHT)/2},
+	speed=10,
+	size=rl.Vector2{20,80},
+}
+
+p_two : player_brick = player_brick{
+	position= rl.Vector2{f32(WINDOW_WIDTH)-20, f32(WINDOW_HEIGHT)/2},
+	speed=10,
+	size=rl.Vector2{20,80},
+}
+
+game_state : game_state_struct = game_state_struct{
+	game_over=false,
+	game_paused=false,
+	player_one_points=0,
+	player_two_points=0,
+}
+
 
 main :: proc() {
-	rl.InitWindow(1000, 860, "Test raylib")
+	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Pong Game")
 	defer rl.CloseWindow()
-
-	world_id := DefineWorld()
-	defer b2.DestroyWorld(world_id)
-
-	ball_id := DefineBall(world_id)
-	defer b2.DestroyBody(ball_id)
-
-	rl.SetTargetFPS(80)
+	
+	rl.SetTargetFPS(60)
 	for !rl.WindowShouldClose() {
-		dt := rl.GetFrameTime()
-		b2.World_Step(world_id, dt, 8)
-
-		rl.BeginDrawing()
-		rl.ClearBackground(rl.BLACK)
 		
-		p := b2.Body_GetWorldPoint(ball_id, {0,0})
-		sphere := rl.Rectangle{p.x, p.y, 10, 10}
-		rl.DrawRectanglePro(sphere, 0, 0, rl.GOLD)
-
-		rl.EndDrawing()
+		update_game()
+		draw_frame()
 	}
 }
 
-DefineWorld :: proc() -> b2.WorldId {
-	world_def := b2.DefaultWorldDef()
-	world_id := b2.CreateWorld(world_def)
-
-	return world_id;
+draw_background :: proc() {
+	rl.ClearBackground(rl.BLACK)
+	rl.DrawRectangle(0,0,WINDOW_WIDTH,10,rl.GRAY)
+	rl.DrawRectangle(0,WINDOW_HEIGHT-10,WINDOW_WIDTH,10,rl.GRAY)		
 }
 
-DefineBall :: proc(#by_ptr world_id: b2.WorldId) -> b2.BodyId {
-	body_def := b2.DefaultBodyDef()
-	body_def.type = .dynamicBody
-	body_def.position = {500, 430}
-	body_def.linearVelocity = {-30, 0}
-	ball_id := b2.CreateBody(world_id ,body_def)
+draw_frame :: proc() {
+	rl.BeginDrawing()		
+	draw_background()
+	rl.DrawCircleV(b.position, b.radius, rl.GOLD)
+	rl.DrawRectangleV(p_one.position, p_one.size, rl.GREEN)
+	rl.DrawRectangleV(p_two.position, p_two.size, rl.GREEN)
+	rl.EndDrawing()
+}
+
+update_game :: proc() {
+	if game_state.game_over {
+		return;
+	}
 	
-	return ball_id
+	if b.active {
+		b.position += b.speed
+	}
+	
+	if b.position.x > f32(WINDOW_WIDTH) || b.position.x < 0 {
+		b.speed *= -1;
+	}		
 }
