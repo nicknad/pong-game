@@ -3,74 +3,12 @@ package main
 import "core:fmt"
 import rl "vendor:raylib"
 
-// CONSTANTS
-WINDOW_HEIGHT : f32 : 860
-WINDOW_WIDTH : f32 : 1024
-WINDOW_HEIGHT_I32 : i32 : 860
-WINDOW_WIDTH_I32 : i32 : 1024
-
-POINTS_NEEDED_TO_WIN : u32 : 10
-
-// DEFINITIONS
-ball :: struct {
-	position: rl.Vector2,
-	speed: rl.Vector2,
-	radius: f32,
-	active: bool,
-}
-
-player_brick :: struct {
-	position: rl.Vector2,
-	speed: f32,
-	size: rl.Vector2,
-	key_up : bool,
-	key_down : bool,
-}
-
-game_state_struct :: struct {
-	player_one_points: u32,
-	player_two_points: u32,
-	game_paused: bool,
-	game_over: bool,
-}
-
-// Global Variables
-b : ball = ball{
-	position=rl.Vector2{WINDOW_WIDTH/2, WINDOW_HEIGHT/2}, 
-	speed=rl.Vector2{5,0}, 
-	radius=10, 
-	active=true,
-	}
-
-p_one : player_brick = player_brick{
-	position= rl.Vector2{0, (WINDOW_HEIGHT/2)-40},
-	speed=10,
-	size=rl.Vector2{20,80},
-	key_up=false,
-	key_down=false,
-}
-
-p_two : player_brick = player_brick{
-	position= rl.Vector2{WINDOW_WIDTH-20, (WINDOW_HEIGHT/2)-40},
-	speed=10,
-	size=rl.Vector2{20,80},
-	key_up=false,
-	key_down=false,
-}
-
-game_state : game_state_struct = game_state_struct{
-	game_over=false,
-	game_paused=false,
-	player_one_points=0,
-	player_two_points=0,
-}
-
 
 main :: proc() {
 	rl.InitWindow(WINDOW_WIDTH_I32, WINDOW_HEIGHT_I32, "Pong Game")
 	defer rl.CloseWindow()
 	
-	rl.SetTargetFPS(60)
+	rl.SetTargetFPS(50)
 	for !rl.WindowShouldClose() {
 		
 		update_game()
@@ -93,79 +31,100 @@ draw_frame :: proc() {
 	rl.EndDrawing()
 }
 
-
-player_one_input :: proc() {
-	if rl.IsKeyReleased(rl.KeyboardKey.Q) {
-		p_one.key_up =  false
+determine_collision_with_p_one :: proc() -> bool {
+	if b.speed.x > 0 {
+		return false
 	}
 	
-	if rl.IsKeyPressed(rl.KeyboardKey.Q) || p_one.key_up {
-		p_one.position.y -= p_one.speed;
-		p_one.key_up = true
-		if p_one.position.y < 0 {
-			p_one.position.y = 0
+	if b.position.x > p_one.size.x {
+		return false 
+	}
+	
+	if b.position.y > p_one.position.y - (p_one.size.y / 2){
+		return false
+	}
+	
+	if b.position.y < p_one.position.y + (p_one.size.y / 2){
+		return false
+	}
+	
+	return true
+}
+
+determine_collision_with_p_two :: proc() -> bool {
+	if b.speed.x < 0 {
+		return false
+	}
+	
+	if 	b.position.x < WINDOW_WIDTH- p_two.size.x  {
+		return false 
+	}
+	
+	if b.position.y > p_two.position.y - (p_two.size.y / 2){
+		return false
+	}
+	
+	if b.position.y < p_two.position.y + (p_two.size.y / 2) {
+		return false
+	}
+	
+	return true
+}
+
+determine_collision :: proc() {
+	if b.position.y < 10 {
+		b.speed.y *= -1
+		b.position.y = 10
+	}
+	
+	if b.position.y > WINDOW_HEIGHT - 10 {
+		b.speed.y *= -1
+		b.position.y = WINDOW_HEIGHT - 10
+	}
+	
+	if determine_collision_with_p_one() {
+		b.speed.x *= -1
+		if b.speed.y < 20 || b.speed.y > -20 {
+			b.speed.y += p_one.momentum
 		}
 	}
 	
-	if rl.IsKeyReleased(rl.KeyboardKey.A) {
-		p_one.key_down =  false
-	}
-	
-		
-	if rl.IsKeyPressed(rl.KeyboardKey.A) || p_one.key_down {
-		p_one.position.y += p_one.speed;
-		p_one.key_down =  true
-		
-		if p_one.position.y > WINDOW_HEIGHT - p_one.size.y {
-			p_one.position.y = WINDOW_HEIGHT - p_one.size.y
+	if determine_collision_with_p_two() {
+		b.speed.x *= -1
+		if b.speed.y < 20 || b.speed.y > -20 {
+			b.speed.y += p_two.momentum
 		}
 	}
 }
 
-player_two_input :: proc() {
-	
-	if rl.IsKeyReleased(rl.KeyboardKey.O) {
-		p_two.key_up =  false
+determine_point :: proc() {
+	if b.position.x < -40 {
+		game_state.player_two_points += 1
+		b.position =rl.Vector2{WINDOW_WIDTH/2, WINDOW_HEIGHT/2}
+		b.speed.x *= -1
 	}
 	
-	if rl.IsKeyPressed(rl.KeyboardKey.O) || p_two.key_up{
-		p_two.position.y -= p_two.speed;
-		p_two.key_up = true
-		
-		if p_two.position.y < 0 {
-			p_two.position.y = 0
-		}
-	}
-	
-	if rl.IsKeyReleased(rl.KeyboardKey.L) {
-		p_two.key_down =  false
-	}
-	
-		
-	if rl.IsKeyPressed(rl.KeyboardKey.L) || p_two.key_down{
-		p_two.position.y += p_two.speed;
-		p_two.key_down =  true
-		
-		if p_two.position.y > WINDOW_HEIGHT - p_two.size.y {
-			p_two.position.y = WINDOW_HEIGHT - p_two.size.y
-		}
+	if b.position.x > WINDOW_WIDTH + 40 {
+		game_state.player_one_points += 1
+		b.position =rl.Vector2{WINDOW_WIDTH/2, WINDOW_HEIGHT/2}
+		b.speed.x *= -1
 	}
 }
+
 
 update_game :: proc() {
 	if game_state.game_over {
 		return;
 	}
 	
-	if b.active {
-		b.position += b.speed
-	}
+	determine_collision()
 	
 	player_one_input()
 	player_two_input()	
+	determine_point()
 	
-	
-	if b.position.x > WINDOW_WIDTH || b.position.x < 0 {
-		b.speed *= -1;
-	}		
+	if b.active {
+		b.position += b.speed
+	}
 }
+
