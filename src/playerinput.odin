@@ -14,7 +14,7 @@ player_one_input :: proc() {
 			p_one.position.y = 0
 		}
 		
-		if p_one.momentum <= 10 {
+		if p_one.momentum < 10 {
 			p_one.momentum += 1
 		}
 	}
@@ -33,7 +33,7 @@ player_one_input :: proc() {
 			p_one.position.y = WINDOW_HEIGHT - p_one.size.y
 		}
 		
-		if p_one.momentum >= -10 {
+		if p_one.momentum > -10 {
 			p_one.momentum -= 1
 		}
 	}
@@ -52,6 +52,10 @@ player_two_input :: proc() {
 		if p_two.position.y < 0 {
 			p_two.position.y = 0
 		}
+		
+		if p_two.momentum < 10 {
+			p_two.momentum += 1
+		}
 	}
 	
 	if rl.IsKeyReleased(p_two_down) {
@@ -65,6 +69,10 @@ player_two_input :: proc() {
 		
 		if p_two.position.y > WINDOW_HEIGHT - p_two.size.y {
 			p_two.position.y = WINDOW_HEIGHT - p_two.size.y
+		}
+		
+		if p_one.momentum > -10 {
+			p_one.momentum -= 1
 		}
 	}
 }

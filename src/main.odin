@@ -31,40 +31,44 @@ draw_frame :: proc() {
 	rl.EndDrawing()
 }
 
-determine_collision_with_p_one :: proc() -> bool {
+determine_ball_collision_with_p_one :: proc() -> bool {
+	// if ball is going away from player one side, collision impossible
 	if b.speed.x > 0 {
 		return false
 	}
 	
-	if b.position.x > p_one.size.x {
+	// if ball is more to the right then the width of player one, collision is impossible
+	if (b.position.x + b.radius) > p_one.size.x {
 		return false 
 	}
 	
-	if b.position.y > p_one.position.y - (p_one.size.y / 2){
+	// if bool is above the upper value
+	if (b.position.y + b.radius) < p_one.position.y{
 		return false
 	}
 	
-	if b.position.y < p_one.position.y + (p_one.size.y / 2){
+	// if bool is above the upper value below
+	if (b.position.y - b.radius) > (p_one.position.y + p_one.size.y) {
 		return false
 	}
 	
 	return true
 }
 
-determine_collision_with_p_two :: proc() -> bool {
+determine_ball_collision_with_p_two :: proc() -> bool {
 	if b.speed.x < 0 {
 		return false
 	}
 	
-	if 	b.position.x < WINDOW_WIDTH- p_two.size.x  {
+	if 	(b.position.x + b.radius) < WINDOW_WIDTH - p_two.size.x  {
 		return false 
 	}
 	
-	if b.position.y > p_two.position.y - (p_two.size.y / 2){
+	if (b.position.y + b.radius) < p_two.position.y {
 		return false
 	}
 	
-	if b.position.y < p_two.position.y + (p_two.size.y / 2) {
+	if (b.position.y - b.radius) > p_two.position.y + p_two.size.y {
 		return false
 	}
 	
@@ -82,16 +86,26 @@ determine_collision :: proc() {
 		b.position.y = WINDOW_HEIGHT - 10
 	}
 	
-	if determine_collision_with_p_one() {
+	if determine_ball_collision_with_p_one() {
 		b.speed.x *= -1
-		if b.speed.y < 20 || b.speed.y > -20 {
+		if b.speed.y + p_one.momentum > 15 {
+			b.speed.y = 15
+		} else if b.speed.y - p_one.momentum < -15 {
+			b.speed.y = -15
+		} else {
 			b.speed.y += p_one.momentum
 		}
 	}
 	
-	if determine_collision_with_p_two() {
+	if determine_ball_collision_with_p_two() {
 		b.speed.x *= -1
-		if b.speed.y < 20 || b.speed.y > -20 {
+		
+		if b.speed.y + p_two.momentum > 15
+		{
+			b.speed.y = 15
+		} else if b.speed.y - p_two.momentum < -15 {
+			b.speed.y = -15
+		} else {
 			b.speed.y += p_two.momentum
 		}
 	}
@@ -113,18 +127,19 @@ determine_point :: proc() {
 
 
 update_game :: proc() {
+	
 	if game_state.game_over {
 		return;
 	}
 	
-	determine_collision()
-	
-	player_one_input()
-	player_two_input()	
-	determine_point()
-	
 	if b.active {
 		b.position += b.speed
 	}
+	player_one_input()
+	player_two_input()	
+	determine_collision()
+	determine_point()
+	
+
 }
 

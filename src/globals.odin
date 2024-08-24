@@ -4,7 +4,7 @@ import rl "vendor:raylib"
 
 b : ball = ball{
 	position=rl.Vector2{WINDOW_WIDTH/2, WINDOW_HEIGHT/2}, 
-	speed=rl.Vector2{1,10}, 
+	speed=rl.Vector2{5,0}, 
 	radius=10, 
 	active=true,
 	}
