@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:strings"
 import rl "vendor:raylib"
 
 
@@ -20,6 +21,10 @@ draw_background :: proc() {
 	rl.ClearBackground(rl.BLACK)
 	rl.DrawRectangle(0,0,WINDOW_WIDTH_I32,10,rl.GRAY)
 	rl.DrawRectangle(0,WINDOW_HEIGHT_I32-10,WINDOW_WIDTH_I32,10,rl.GRAY)		
+	p_one_pts : cstring =  strings.clone_to_cstring(fmt.tprintf("Player One: %d", game_state.player_one_points))
+	rl.DrawText(p_one_pts, 75, 200, 32, rl.RED) 
+	p_two_pts : cstring  = strings.clone_to_cstring(fmt.tprintf("Player Two: %d", game_state.player_two_points))
+	rl.DrawText(p_two_pts, 675, 200, 32, rl.RED) 
 }
 
 draw_frame :: proc() {
@@ -135,11 +140,11 @@ update_game :: proc() {
 	if b.active {
 		b.position += b.speed
 	}
+	
 	player_one_input()
-	player_two_input()	
+	engine_player_follow_strat()
+	// player_two_input()	
 	determine_collision()
 	determine_point()
-	
-
 }
 
