@@ -1,7 +1,7 @@
 package main
 
 engine_player_follow_strat :: proc() {
-	if b.position.y > p_two.position.y {
+	if b.position.y > p_two.position.y + (p_two.size.y / 2) {
 		p_two.position.y += p_two.speed;
 		
 		if p_two.position.y > WINDOW_HEIGHT - p_two.size.y {
@@ -9,7 +9,7 @@ engine_player_follow_strat :: proc() {
 		}
 	}
 	
-	if b.position.y < p_two.position.y {
+	if b.position.y < p_two.position.y + (p_two.size.y / 2) {
 		p_two.position.y -= p_two.speed;
 		if p_two.position.y < 0 {
 			p_two.position.y = 0
